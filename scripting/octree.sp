@@ -121,7 +121,7 @@ public int Native_OctNode_GetCenter(Handle hPlugin, int iArgC) {
 	SetNativeArray(2, fCenter, sizeof(fCenter));
 }
 
-public int Native_OctNode_GetBranch(Handle hPlugin, int iArgC) {
+public any Native_OctNode_GetBranch(Handle hPlugin, int iArgC) {
 	int iThis = GetNativeCell(1)-1;
 	int iOctant = GetNativeCell(2);
 	bool bAutoCreate = GetNativeCell(3) != 0;
@@ -143,10 +143,10 @@ public int Native_OctNode_GetBranch(Handle hPlugin, int iArgC) {
 		hOctNodes.Set(iThis, iBranchNode, _OctNode::iBranches + iOctant);
 	}
 
-	return view_as<int>(iBranchNode);
+	return iBranchNode;
 }
 
-public int Native_OctNode_GetNearestBranch(Handle hPlugin, int iArgC) {
+public any Native_OctNode_GetNearestBranch(Handle hPlugin, int iArgC) {
 	int iThis = GetNativeCell(1)-1;
 
 	float fPos[3];
@@ -173,7 +173,7 @@ public int Native_OctNode_GetNearestBranch(Handle hPlugin, int iArgC) {
 		hOctNodes.Set(iThis, iBranchNode, _OctNode::iBranches + iOctant);
 	}
 
-	return view_as<int>(iBranchNode);
+	return iBranchNode;
 }
 
 public int Native_OctNode_Insert(Handle hPlugin, int iArgC) {
@@ -366,7 +366,7 @@ public int Native_Octree_Insert(Handle hPlugin, int iArgC) {
 
 	any aData = GetNativeCell(3);
 
-	OctNode iRootNode = view_as<OctNode>(hOctrees.Get(iThis, _Octree::iRootNode));
+	OctNode iRootNode = hOctrees.Get(iThis, _Octree::iRootNode);
 	iRootNode.Insert(fPos, aData);
 
 	int iSize = hOctrees.Get(iThis, _Octree::iSize);
@@ -385,7 +385,7 @@ public int Native_Octree_Find(Handle hPlugin, int iArgC) {
 
 	ArrayList hFound = new ArrayList(sizeof(_OctItem));
 
-	OctNode iRootNode = view_as<OctNode>(hOctrees.Get(iThis, _Octree::iRootNode));
+	OctNode iRootNode = hOctrees.Get(iThis, _Octree::iRootNode);
 	int iTotal = iRootNode.Find(fPos, fRadius, hFound);
 
 	if (bSort) {

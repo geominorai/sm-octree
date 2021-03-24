@@ -4,7 +4,7 @@
 #define DEBUG
 
 #define PLUGIN_AUTHOR "AI"
-#define PLUGIN_VERSION "0.1.0"
+#define PLUGIN_VERSION "0.1.1"
 
 #include <sourcemod>
 #include <octree>
@@ -157,7 +157,7 @@ public int Native_OctNode_GetNearestBranch(Handle hPlugin, int iArgC) {
 	float fCenter[3];
 	hOctNodes.GetArray(iThis, fCenter, sizeof(fCenter));
 
-	int iOctant = view_as<int>(fPos[0] >= fCenter[0]) << 2 | view_as<int>(fPos[1] >= fCenter[1]) << 1 | view_as<int>(fPos[0] >= fCenter[0]);
+	int iOctant = view_as<int>(fPos[0] >= fCenter[0]) << 2 | view_as<int>(fPos[1] >= fCenter[1]) << 1 | view_as<int>(fPos[2] >= fCenter[2]);
 
 	OctNode iBranchNode = hOctNodes.Get(iThis, _OctNode::iBranches + iOctant);
 	if (!iBranchNode && bAutoCreate) {

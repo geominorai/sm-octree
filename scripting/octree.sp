@@ -4,7 +4,7 @@
 #define DEBUG
 
 #define PLUGIN_AUTHOR "AI"
-#define PLUGIN_VERSION "0.1.1"
+#define PLUGIN_VERSION "0.1.2"
 
 #include <sourcemod>
 #include <octree>
@@ -304,7 +304,7 @@ public int Native_OctNode_Instance(Handle hPlugin, int iArgC) {
 public int Native_OctNode_Destroy(Handle hPlugin, int iArgC) {
 	if (hOctNodes != null) {
 		int iOctNodeIdx = GetNativeCellRef(1)-1;
-		if (iOctNodeIdx <= 0) {
+		if (iOctNodeIdx < 0) {
 			return;
 		}
 
@@ -319,7 +319,7 @@ public int Native_OctNode_Destroy(Handle hPlugin, int iArgC) {
 		SetNativeCellRef(1, NULL_OCTNODE);
 
 		if (iOctNodeIdx+1 == iOctNodeAlloc) {
-			for (int i=iOctNodeAlloc-1; i>0; i++) {
+			for (int i=iOctNodeAlloc-1; i>0; i--) {
 				if (!hOctNodes.Get(i-1, _OctNode::bGCFlag)) {
 					hOctNodes.Resize(iOctNodeAlloc = i);
 					return;
@@ -438,7 +438,7 @@ public int Native_Octree_Instance(Handle hPlugin, int iArgC) {
 public int Native_Octree_Destroy(Handle hPlugin, int iArgC) {
 	if (hOctrees != null) {
 		int iOctree = GetNativeCellRef(1)-1;
-		if (iOctree <= 0) {
+		if (iOctree < 0) {
 			return;
 		}
 

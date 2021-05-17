@@ -4,7 +4,7 @@
 #define DEBUG
 
 #define PLUGIN_AUTHOR "AI"
-#define PLUGIN_VERSION "0.1.2"
+#define PLUGIN_VERSION "0.1.3"
 
 #include <sourcemod>
 #include <octree>
@@ -308,18 +308,18 @@ public int Native_OctNode_Destroy(Handle hPlugin, int iArgC) {
 			return;
 		}
 
-		hOctNodes.Set(iOctNodeIdx, 1, _OctNode::bGCFlag);
-		delete view_as<ArrayList>(hOctNodes.Get(iOctNodeIdx, _OctNode::hBuffer));
-
 		for (int i=0; i<8; i++) {
 			OctNode iBranchNode = hOctNodes.Get(iOctNodeIdx, _OctNode::iBranches+i);
 			OctNode.Destroy(iBranchNode);
 		}
 
+		hOctNodes.Set(iOctNodeIdx, 1, _OctNode::bGCFlag);
+		delete view_as<ArrayList>(hOctNodes.Get(iOctNodeIdx, _OctNode::hBuffer));
+
 		SetNativeCellRef(1, NULL_OCTNODE);
 
 		if (iOctNodeIdx+1 == iOctNodeAlloc) {
-			for (int i=iOctNodeAlloc-1; i>0; i--) {
+			for (int i=iOctNodeIdx; i>0; i--) {
 				if (!hOctNodes.Get(i-1, _OctNode::bGCFlag)) {
 					hOctNodes.Resize(iOctNodeAlloc = i);
 					return;
@@ -327,6 +327,7 @@ public int Native_OctNode_Destroy(Handle hPlugin, int iArgC) {
 			}
 
 			hOctNodes.Clear();
+			iOctNodeAlloc = 0;
 		}
 	}
 }
@@ -442,15 +443,15 @@ public int Native_Octree_Destroy(Handle hPlugin, int iArgC) {
 			return;
 		}
 
-		hOctrees.Set(iOctree, 1, _Octree::bGCFlag);
-
 		OctNode iRootNode = view_as<OctNode>(hOctrees.Get(iOctree, _Octree::iRootNode));
 		OctNode.Destroy(iRootNode);
+
+		hOctrees.Set(iOctree, 1, _Octree::bGCFlag);
 
 		SetNativeCellRef(1, NULL_OCTREE);
 
 		if (iOctree+1 == iOctreeAlloc) {
-			for (int i=iOctreeAlloc-1; i>0; i++) {
+			for (int i=iOctree; i>0; i--) {
 				if (!hOctrees.Get(i-1, _Octree::bGCFlag)) {
 					hOctrees.Resize(iOctreeAlloc = i);
 					return;
@@ -458,6 +459,7 @@ public int Native_Octree_Destroy(Handle hPlugin, int iArgC) {
 			}
 
 			hOctrees.Clear();
+			iOctreeAlloc = 0;
 		}
 	}
 }

@@ -4,7 +4,7 @@
 #define DEBUG
 
 #define PLUGIN_AUTHOR "AI"
-#define PLUGIN_VERSION "0.1.3"
+#define PLUGIN_VERSION "0.1.4"
 
 #include <sourcemod>
 #include <octree>
@@ -226,18 +226,16 @@ public int Native_OctNode_Find(Handle hPlugin, int iArgC) {
 	hOctNodes.GetArray(iThis, fCenter, sizeof(fCenter));
 
 	float fPosShift[3];
-	SubtractVectors(fPos, fCenter, fPosShift);
+	fPosShift[0] = FloatAbs(fPos[0]-fCenter[0]);
+	fPosShift[1] = FloatAbs(fPos[1]-fCenter[1]);
+	fPosShift[2] = FloatAbs(fPos[2]-fCenter[2]);
 
-	// AABB and query sphere overlap tests
+	float fRange = fHalfWidth + fRadius;
 
-	if (fPosShift[0] > fHalfWidth && fPosShift[1] > fHalfWidth && fPosShift[2] > fHalfWidth) {
-		fPosShift[0] -= fHalfWidth;
-		fPosShift[1] -= fHalfWidth;
-		fPosShift[2] -= fHalfWidth;
+	// AABB and query sphere overlap tests: max_j(q'[j]) < e+r  -->  q'[j] <= q'[ max_j(q'[j]) ] < e+r 
 
-		if (GetVectorLength(fPosShift) > fRadius) {
-			return 0;
-		}
+	if (fPosShift[0] >= fRange || fPosShift[1] >= fRange || fPosShift[2] >= fRange) {
+		return 0;
 	}
 
 	int iTotal;
@@ -246,7 +244,8 @@ public int Native_OctNode_Find(Handle hPlugin, int iArgC) {
 	if (hBuffer) {
 		_OctItem eItem;
 
-		for (int i=0; i<hBuffer.Length; i++) {
+		int iBufferLength = hBuffer.Length;
+		for (int i=0; i<iBufferLength; i++) {
 			hBuffer.GetArray(i, eItem);
 
 			if (GetVectorDistance(fPos, eItem.fPos) < fRadius) {
@@ -290,7 +289,8 @@ public int Native_OctNode_Instance(Handle hPlugin, int iArgC) {
 		eOctNode.iDepth = hOctNodes.Get(view_as<int>(iParent)-1, _OctNode::iDepth) + 1;
 	}
 
-	for (int i=0; i<hOctNodes.Length; i++) {
+	int iOctNodesLength = hOctNodes.Length;
+	for (int i=0; i<iOctNodesLength; i++) {
 		if (hOctNodes.Get(i, _OctNode::bGCFlag)) {
 			hOctNodes.SetArray(i, eOctNode);
 
@@ -425,7 +425,8 @@ public int Native_Octree_Instance(Handle hPlugin, int iArgC) {
 	eOctree.iRootNode = iRootNode;
 	eOctree.iBufferSize = iBufferSize;
 
-	for (int i=0; i<hOctrees.Length; i++) {
+	int iOctreesLength = hOctrees.Length;
+	for (int i=0; i<iOctreesLength; i++) {
 		if (hOctrees.Get(i, _Octree::bGCFlag)) {
 			hOctrees.SetArray(i, eOctree);
 

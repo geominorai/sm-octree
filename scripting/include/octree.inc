@@ -84,10 +84,15 @@ methodmap Octree {
 	public native void GetCenter(float fCenter[3]);
 
 	public native void Insert(float fPos[3], any aData);
-	public native int Find(float fPos[3], float fRadius, ArrayList hResult, bool bSort=false);
+	public native int Find(float fPos[3], float fRadius, ArrayList hResult, bool bSort=false, bool bIncludePos=false);
 
 	public static native Octree Instance(float fCenter[3], float fHalfWidth, int iBufferSize=50);
 	public static native void Destroy(Octree &iOctree);
+}
+
+enum struct OctItem {
+	float fPos[3];
+	any aData;
 }
 
 #define NULL_OCTNODE	view_as<OctNode>(0)

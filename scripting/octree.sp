@@ -4,7 +4,7 @@
 #define DEBUG
 
 #define PLUGIN_AUTHOR "AI"
-#define PLUGIN_VERSION "0.1.4"
+#define PLUGIN_VERSION "0.1.5"
 
 #include <sourcemod>
 #include <octree>
@@ -59,11 +59,6 @@ enum struct _OctNode {
 	any aData;
 	OctNode iBranches[8];
 	bool bGCFlag;
-}
-
-enum struct _OctItem {
-	float fPos[3];
-	any aData;
 }
 
 static ArrayList hOctNodes = null;
@@ -186,7 +181,7 @@ public int Native_OctNode_Insert(Handle hPlugin, int iArgC) {
 
 	ArrayList hBuffer = iOctNode.hBuffer;
 	if (hBuffer) {
-		_OctItem eItem;
+		OctItem eItem;
 		eItem.fPos = fPos;
 		eItem.aData = aData;
 		hBuffer.PushArray(eItem);
@@ -214,23 +209,21 @@ public int Native_OctNode_Insert(Handle hPlugin, int iArgC) {
 public int Native_OctNode_Find(Handle hPlugin, int iArgC) {
 	int iThis = GetNativeCell(1)-1;
 
+	_OctNode eOctNode;
+	hOctNodes.GetArray(iThis, eOctNode);
+
 	float fPos[3];
 	GetNativeArray(2, fPos, sizeof(fPos));
 
 	float fRadius = GetNativeCell(3);
 	ArrayList hFound = GetNativeCell(4);
 
-	float fHalfWidth = view_as<float>(hOctNodes.Get(iThis, _OctNode::fHalfWidth));
-
-	float fCenter[3];
-	hOctNodes.GetArray(iThis, fCenter, sizeof(fCenter));
-
 	float fPosShift[3];
-	fPosShift[0] = FloatAbs(fPos[0]-fCenter[0]);
-	fPosShift[1] = FloatAbs(fPos[1]-fCenter[1]);
-	fPosShift[2] = FloatAbs(fPos[2]-fCenter[2]);
+	fPosShift[0] = FloatAbs(fPos[0]-eOctNode.fCenter[0]);
+	fPosShift[1] = FloatAbs(fPos[1]-eOctNode.fCenter[1]);
+	fPosShift[2] = FloatAbs(fPos[2]-eOctNode.fCenter[2]);
 
-	float fRange = fHalfWidth + fRadius;
+	float fRange = eOctNode.fHalfWidth + fRadius;
 
 	// AABB and query sphere overlap tests: max_j(q'[j]) < e+r  -->  q'[j] <= q'[ max_j(q'[j]) ] < e+r 
 
@@ -240,9 +233,9 @@ public int Native_OctNode_Find(Handle hPlugin, int iArgC) {
 
 	int iTotal;
 
-	ArrayList hBuffer = hOctNodes.Get(iThis, _OctNode::hBuffer);
+	ArrayList hBuffer = eOctNode.hBuffer;
 	if (hBuffer) {
-		_OctItem eItem;
+		OctItem eItem;
 
 		int iBufferLength = hBuffer.Length;
 		for (int i=0; i<iBufferLength; i++) {
@@ -254,8 +247,10 @@ public int Native_OctNode_Find(Handle hPlugin, int iArgC) {
 			}
 		}
 	} else {
+		OctNode iBranchNode;
+
 		for (int i=0; i<8; i++) {
-			OctNode iBranchNode = hOctNodes.Get(iThis, _OctNode::iBranches + i);
+			iBranchNode = eOctNode.iBranches[i];
 			if (iBranchNode) {
 				iTotal += iBranchNode.Find(fPos, fRadius, hFound);
 			}
@@ -282,7 +277,7 @@ public int Native_OctNode_Instance(Handle hPlugin, int iArgC) {
 	eOctNode.fCenter = fCenter;
 	eOctNode.fHalfWidth = fHalfWidth;
 	eOctNode.iParent = iParent;
-	eOctNode.hBuffer = new ArrayList(sizeof(_OctItem));
+	eOctNode.hBuffer = new ArrayList(sizeof(OctItem));
 	eOctNode.iBufferSize = iBufferSize;
 
 	if (iParent) {
@@ -383,8 +378,9 @@ public int Native_Octree_Find(Handle hPlugin, int iArgC) {
 	float fRadius = GetNativeCell(3);
 	ArrayList hResult = GetNativeCell(4);
 	bool bSort = GetNativeCell(5);
+	bool bIncludePos = GetNativeCell(6);
 
-	ArrayList hFound = new ArrayList(sizeof(_OctItem));
+	ArrayList hFound = new ArrayList(sizeof(OctItem));
 
 	OctNode iRootNode = hOctrees.Get(iThis, _Octree::iRootNode);
 	int iTotal = iRootNode.Find(fPos, fRadius, hFound);
@@ -396,8 +392,16 @@ public int Native_Octree_Find(Handle hPlugin, int iArgC) {
 		delete hData;
 	}
 
-	for (int i=0; i<iTotal; i++) {
-		hResult.Push(hFound.Get(i, _OctItem::aData));
+	if (bIncludePos) {
+		OctItem eOctItem;
+		for (int i=0; i<iTotal; i++) {
+			hFound.GetArray(i, eOctItem);
+			hResult.PushArray(eOctItem);
+		}
+	} else {
+		for (int i=0; i<iTotal; i++) {
+			hResult.Push(hFound.Get(i, OctItem::aData));
+		}
 	}
 
 	delete hFound;

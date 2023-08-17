@@ -17,7 +17,7 @@ public SharedPlugin __pl_octree = {
 public void __pl_octree_SetNTVOptional() {
 	MarkNativeAsOptional("OctNode.fHalfWidth.get");
 	MarkNativeAsOptional("OctNode.iDepth.get");
-	MarkNativeAsOptional("OctNode.iParent.get");
+	MarkNativeAsOptional("OctNode.mParent.get");
 	MarkNativeAsOptional("OctNode.hBuffer.get");
 	MarkNativeAsOptional("OctNode.bLeaf.get");
 	MarkNativeAsOptional("OctNode.aData.get");
@@ -48,7 +48,7 @@ methodmap OctNode {
 		public native get();
 	}
 
-	property OctNode iParent {
+	property OctNode mParent {
 		public native get();
 	}
 
@@ -65,15 +65,15 @@ methodmap OctNode {
 		public native set(any aData);
 	}
 
-	public native void GetCenter(float fCenter[3]);
+	public native void GetCenter(float vecCenter[3]);
 	public native OctNode GetBranch(int iOctant, bool bAutoCreate=false);
-	public native OctNode GetNearestBranch(float fPos[3], bool bAutoCreate=false);
+	public native OctNode GetNearestBranch(float vecPos[3], bool bAutoCreate=false);
 
-	public native void Insert(float fPos[3], any aData);
-	public native int Find(float fPos[3], float fRadius, ArrayList hResult);
+	public native void Insert(float vecPos[3], any aData);
+	public native int Find(float vecPos[3], float fRadius, ArrayList hResult);
 
-	public static native OctNode Instance(OctNode iParentNode, float fCenter[3], float fHalfWidth, int iBufferSize=50);
-	public static native void Destroy(OctNode &iNode);
+	public static native OctNode Instance(OctNode mParentNode, float vecCenter[3], float fHalfWidth, int iBufferSize=50);
+	public static native void Destroy(OctNode &mNode);
 }
 
 methodmap Octree {
@@ -81,17 +81,17 @@ methodmap Octree {
 		public native get();
 	}
 
-	public native void GetCenter(float fCenter[3]);
+	public native void GetCenter(float vecCenter[3]);
 
-	public native void Insert(float fPos[3], any aData);
-	public native int Find(float fPos[3], float fRadius, ArrayList hResult, bool bSort=false, bool bIncludePos=false);
+	public native void Insert(float vecPos[3], any aData);
+	public native int Find(float vecPos[3], float fRadius, ArrayList hResult, bool bSort=false, bool bIncludePos=false, int iMaxResults=-1);
 
-	public static native Octree Instance(float fCenter[3], float fHalfWidth, int iBufferSize=50);
-	public static native void Destroy(Octree &iOctree);
+	public static native Octree Instance(float vecCenter[3], float fHalfWidth, int iBufferSize=50);
+	public static native void Destroy(Octree &mOctree);
 }
 
 enum struct OctItem {
-	float fPos[3];
+	float vecPos[3];
 	any aData;
 }
 

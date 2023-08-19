@@ -4,7 +4,7 @@
 #define DEBUG
 
 #define PLUGIN_AUTHOR "AI"
-#define PLUGIN_VERSION "0.1.6"
+#define PLUGIN_VERSION "0.2.0"
 
 #include <sourcemod>
 #include <octree>
@@ -32,8 +32,10 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int sErr
 	CreateNative("OctNode.aData.get",			Native_OctNode_GetData);
 	CreateNative("OctNode.aData.set",			Native_OctNode_SetData);
 	CreateNative("OctNode.GetCenter",			Native_OctNode_GetCenter);
+	CreateNative("OctNode.GetBounds",			Native_OctNode_GetBounds);
 	CreateNative("OctNode.GetBranch",			Native_OctNode_GetBranch);
 	CreateNative("OctNode.GetNearestBranch",	Native_OctNode_GetNearestBranch);
+	CreateNative("OctNode.Contains",			Native_OctNode_Contains);
 	CreateNative("OctNode.Insert",				Native_OctNode_Insert);
 	CreateNative("OctNode.Find",				Native_OctNode_Find);
 	CreateNative("OctNode.Instance",			Native_OctNode_Instance);
@@ -41,6 +43,8 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int sErr
 
 	CreateNative("Octree.iSize.get",			Native_Octree_GetSize);
 	CreateNative("Octree.GetCenter",			Native_Octree_GetCenter);
+	CreateNative("Octree.GetBounds",			Native_Octree_GetBounds);
+	CreateNative("Octree.Contains",				Native_Octree_Contains);
 	CreateNative("Octree.Insert",				Native_Octree_Insert);
 	CreateNative("Octree.Find",					Native_Octree_Find);
 	CreateNative("Octree.Instance",				Native_Octree_Instance);
@@ -54,7 +58,6 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int sErr
 enum struct _OctNode {
 	float vecCenter[3];
 	float fHalfWidth;
-	int iDepth;
 	OctNode mParent;
 	ArrayList hBuffer;
 	int iBufferSize;
@@ -73,9 +76,14 @@ public int Native_OctNode_GetHalfWidth(Handle hPlugin, int iArgC) {
 }
 
 public int Native_OctNode_GetDepth(Handle hPlugin, int iArgC) {
-	int iThis = GetNativeCell(1)-1;
+	int iDepth;
+	OctNode mOctNode = GetNativeCell(1);
+	while (mOctNode) {
+		iDepth++;
+		mOctNode = mOctNode.mParent;
+	}
 
-	return hOctNodes.Get(iThis, _OctNode::iDepth);
+	return iDepth;
 }
 
 public int Native_OctNode_GetParent(Handle hPlugin, int iArgC) {
@@ -118,6 +126,29 @@ public int Native_OctNode_GetCenter(Handle hPlugin, int iArgC) {
 	hOctNodes.GetArray(iThis, vecCenter, sizeof(vecCenter));
 
 	SetNativeArray(2, vecCenter, sizeof(vecCenter));
+
+	return 0;
+}
+
+public int Native_OctNode_GetBounds(Handle hPlugin, int iArgC) {
+	int iThis = GetNativeCell(1)-1;
+
+	float vecCenter[3];
+	hOctNodes.GetArray(iThis, vecCenter, sizeof(vecCenter));
+
+	float fHalfWidth = hOctNodes.Get(iThis, _OctNode::fHalfWidth);
+
+	float vecMins[3], vecMaxs[3];
+	vecMins[0] = vecCenter[0] - fHalfWidth;
+	vecMins[1] = vecCenter[1] - fHalfWidth;
+	vecMins[2] = vecCenter[2] - fHalfWidth;
+
+	vecMaxs[0] = vecCenter[0] + fHalfWidth;
+	vecMaxs[1] = vecCenter[1] + fHalfWidth;
+	vecMaxs[2] = vecCenter[2] + fHalfWidth;
+
+	SetNativeArray(2, vecMins, sizeof(vecMins));
+	SetNativeArray(3, vecMaxs, sizeof(vecMaxs));
 
 	return 0;
 }
@@ -177,11 +208,40 @@ public any Native_OctNode_GetNearestBranch(Handle hPlugin, int iArgC) {
 	return mBranchNode;
 }
 
+public any Native_OctNode_Contains(Handle hPlugin, int iArgC) {
+	OctNode mOctNode = GetNativeCell(1);
+
+	float vecPos[3];
+	GetNativeArray(2, vecPos, sizeof(vecPos));
+
+	float fHalfWidth = mOctNode.fHalfWidth;
+
+	float vecCenter[3];
+	mOctNode.GetCenter(vecCenter);
+
+	return
+		(vecCenter[0] - fHalfWidth <= vecPos[0] < vecCenter[0] + fHalfWidth) &&
+		(vecCenter[1] - fHalfWidth <= vecPos[1] < vecCenter[1] + fHalfWidth) &&
+		(vecCenter[2] - fHalfWidth <= vecPos[2] < vecCenter[2] + fHalfWidth);
+}
+
 public int Native_OctNode_Insert(Handle hPlugin, int iArgC) {
 	OctNode mOctNode = GetNativeCell(1);
 
 	float vecPos[3];
 	GetNativeArray(2, vecPos, sizeof(vecPos));
+
+	if (!mOctNode.Contains(vecPos)) {
+		float vecMins[3], vecMaxs[3];
+		mOctNode.GetBounds(vecMins, vecMaxs);
+
+		ThrowError(
+			"Point [%.1f, %.1f, %.1f] is out of bounds (mins: [%.1f, %.1f, %.1f], maxs: [%.1f, %.1f, %.1f])",
+			vecPos[0], vecPos[1], vecPos[2],
+			vecMins[0], vecMins[1], vecMins[2],
+			vecMaxs[0], vecMaxs[1], vecMaxs[2]
+		);
+	}
 
 	any aData = GetNativeCell(3);
 
@@ -288,10 +348,6 @@ public int Native_OctNode_Instance(Handle hPlugin, int iArgC) {
 	eOctNode.hBuffer = new ArrayList(sizeof(OctItem));
 	eOctNode.iBufferSize = iBufferSize;
 
-	if (mParent) {
-		eOctNode.iDepth = hOctNodes.Get(view_as<int>(mParent)-1, _OctNode::iDepth) + 1;
-	}
-
 	int iOctNodesLength = hOctNodes.Length;
 	for (int i=0; i<iOctNodesLength; i++) {
 		if (hOctNodes.Get(i, _OctNode::bGCFlag)) {
@@ -364,6 +420,31 @@ public int Native_Octree_GetCenter(Handle hPlugin, int iArgC) {
 	SetNativeArray(2, vecCenter, sizeof(vecCenter));
 
 	return 0;
+}
+
+public int Native_Octree_GetBounds(Handle hPlugin, int iArgC) {
+	int iThis = GetNativeCell(1)-1;
+
+	OctNode mRootNode = hOctrees.Get(iThis, _Octree::mRootNode);
+
+	float vecMins[3], vecMaxs[3];
+	mRootNode.GetBounds(vecMins, vecMaxs);
+
+	SetNativeArray(2, vecMins, sizeof(vecMins));
+	SetNativeArray(3, vecMaxs, sizeof(vecMaxs));
+
+	return 0;
+}
+
+public any Native_Octree_Contains(Handle hPlugin, int iArgC) {
+	int iThis = GetNativeCell(1)-1;
+
+	OctNode mRootNode = hOctrees.Get(iThis, _Octree::mRootNode);
+
+	float vecPos[3];
+	GetNativeArray(2, vecPos, sizeof(vecPos));
+
+	return mRootNode.Contains(vecPos);
 }
 
 public int Native_Octree_Insert(Handle hPlugin, int iArgC) {

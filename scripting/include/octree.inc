@@ -25,6 +25,7 @@ public void __pl_octree_SetNTVOptional() {
 	MarkNativeAsOptional("OctNode.GetCenter");
 	MarkNativeAsOptional("OctNode.GetBranch");
 	MarkNativeAsOptional("OctNode.GetNearestBranch");
+	MarkNativeAsOptional("OctNode.Contains");
 	MarkNativeAsOptional("OctNode.Insert");
 	MarkNativeAsOptional("OctNode.Find");
 	MarkNativeAsOptional("OctNode.Instance");
@@ -66,8 +67,11 @@ methodmap OctNode {
 	}
 
 	public native void GetCenter(float vecCenter[3]);
+	public native void GetBounds(float vecMins[3], float vecMaxs[3]);
 	public native OctNode GetBranch(int iOctant, bool bAutoCreate=false);
 	public native OctNode GetNearestBranch(float vecPos[3], bool bAutoCreate=false);
+
+	public native bool Contains(float vecPos[3]);
 
 	public native void Insert(float vecPos[3], any aData);
 	public native int Find(float vecPos[3], float fRadius, ArrayList hResult);
@@ -82,6 +86,9 @@ methodmap Octree {
 	}
 
 	public native void GetCenter(float vecCenter[3]);
+	public native void GetBounds(float vecMins[3], float vecMaxs[3]);
+
+	public native bool Contains(float vecPos[3]);
 
 	public native void Insert(float vecPos[3], any aData);
 	public native int Find(float vecPos[3], float fRadius, ArrayList hResult, bool bSort=false, bool bIncludePos=false, int iMaxResults=-1);

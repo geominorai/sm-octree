@@ -1,0 +1,49 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v3
+
+    - name: Setup SourcePawn compiler 1.12
+      uses: rumblefrog/setup-sp@master
+      with:
+        version: '1.12.x'
+
+    - name: Create plugins folder
+      run: mkdir plugins
+
+    - name: Build plugin
+      run: |
+        spcomp -iscripting/include scripting/octree.sp -o plugins/octree.smx
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+          name: Plugin
+          path: plugins/
+
+    - name: Prepare release bundles
+      run: |
+        zip -r octree-bundle.zip LICENSE plugins scripting
+        tar -czf octree-bundle.tar.gz LICENSE plugins scripting
+
+    - name: "Release development build"
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "latest"
+        prerelease: true
+        title: "Development Build"
+        files: |
+          octree-bundle.zip
+          octree-bundle.tar.gz

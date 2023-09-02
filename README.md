@@ -11,7 +11,7 @@ Function natives are provided in `include/octree.inc`.
 
 ## Dependencies
 
-- [SourceMod 1.10](https://www.sourcemod.net/)
+- [SourceMod 1.12](https://www.sourcemod.net/)
 
 ## Credits
 

@@ -66,13 +66,13 @@ enum struct _OctNode {
 	bool bGCFlag;
 }
 
-static ArrayList hOctNodes = null;
-static int iOctNodeAlloc = 0;
+static ArrayList m_hOctNodes = null;
+static int m_iOctNodeAlloc = 0;
 
 public int Native_OctNode_GetHalfWidth(Handle hPlugin, int iArgC) {
 	int iThis = GetNativeCell(1)-1;
 
-	return hOctNodes.Get(iThis, _OctNode::fHalfWidth);
+	return m_hOctNodes.Get(iThis, _OctNode::fHalfWidth);
 }
 
 public int Native_OctNode_GetDepth(Handle hPlugin, int iArgC) {
@@ -89,32 +89,32 @@ public int Native_OctNode_GetDepth(Handle hPlugin, int iArgC) {
 public int Native_OctNode_GetParent(Handle hPlugin, int iArgC) {
 	int iThis = GetNativeCell(1)-1;
 
-	return hOctNodes.Get(iThis, _OctNode::mParent);
+	return m_hOctNodes.Get(iThis, _OctNode::mParent);
 }
 
 public int Native_OctNode_GetBuffer(Handle hPlugin, int iArgC) {
 	int iThis = GetNativeCell(1)-1;
 
-	return hOctNodes.Get(iThis, _OctNode::hBuffer);
+	return m_hOctNodes.Get(iThis, _OctNode::hBuffer);
 }
 
 public int Native_OctNode_GetLeaf(Handle hPlugin, int iArgC) {
 	int iThis = GetNativeCell(1)-1;
 
-	return view_as<ArrayList>(hOctNodes.Get(iThis, _OctNode::hBuffer)) != null;
+	return view_as<ArrayList>(m_hOctNodes.Get(iThis, _OctNode::hBuffer)) != null;
 }
 
 public int Native_OctNode_GetData(Handle hPlugin, int iArgC) {
 	int iThis = GetNativeCell(1)-1;
 
-	return hOctNodes.Get(iThis, _OctNode::aData);
+	return m_hOctNodes.Get(iThis, _OctNode::aData);
 }
 
 public int Native_OctNode_SetData(Handle hPlugin, int iArgC) {
 	int iThis = GetNativeCell(1)-1;
 	any aData = GetNativeCell(2);
 
-	hOctNodes.Set(iThis, aData, _OctNode::aData);
+	m_hOctNodes.Set(iThis, aData, _OctNode::aData);
 
 	return 0;
 }
@@ -123,7 +123,7 @@ public int Native_OctNode_GetCenter(Handle hPlugin, int iArgC) {
 	int iThis = GetNativeCell(1)-1;
 
 	float vecCenter[3];
-	hOctNodes.GetArray(iThis, vecCenter, sizeof(vecCenter));
+	m_hOctNodes.GetArray(iThis, vecCenter, sizeof(vecCenter));
 
 	SetNativeArray(2, vecCenter, sizeof(vecCenter));
 
@@ -134,9 +134,9 @@ public int Native_OctNode_GetBounds(Handle hPlugin, int iArgC) {
 	int iThis = GetNativeCell(1)-1;
 
 	float vecCenter[3];
-	hOctNodes.GetArray(iThis, vecCenter, sizeof(vecCenter));
+	m_hOctNodes.GetArray(iThis, vecCenter, sizeof(vecCenter));
 
-	float fHalfWidth = hOctNodes.Get(iThis, _OctNode::fHalfWidth);
+	float fHalfWidth = m_hOctNodes.Get(iThis, _OctNode::fHalfWidth);
 
 	float vecMins[3], vecMaxs[3];
 	vecMins[0] = vecCenter[0] - fHalfWidth;
@@ -158,21 +158,21 @@ public any Native_OctNode_GetBranch(Handle hPlugin, int iArgC) {
 	int iOctant = GetNativeCell(2);
 	bool bAutoCreate = GetNativeCell(3) != 0;
 
-	OctNode mBranchNode = hOctNodes.Get(iThis, _OctNode::mBranches + iOctant);
+	OctNode mBranchNode = m_hOctNodes.Get(iThis, _OctNode::mBranches + iOctant);
 	if (!mBranchNode && bAutoCreate) {
-		int iBufferSize = hOctNodes.Get(iThis, _OctNode::iBufferSize);
+		int iBufferSize = m_hOctNodes.Get(iThis, _OctNode::iBufferSize);
 
 		float vecCenter[3];
-		hOctNodes.GetArray(iThis, vecCenter, sizeof(vecCenter));
+		m_hOctNodes.GetArray(iThis, vecCenter, sizeof(vecCenter));
 
-		float fHalfWidth = 0.5 * view_as<float>(hOctNodes.Get(iThis, _OctNode::fHalfWidth));
+		float fHalfWidth = 0.5 * view_as<float>(m_hOctNodes.Get(iThis, _OctNode::fHalfWidth));
 
 		vecCenter[0] += iOctant & 4 ? fHalfWidth : -fHalfWidth;
 		vecCenter[1] += iOctant & 2 ? fHalfWidth : -fHalfWidth;
 		vecCenter[2] += iOctant & 1 ? fHalfWidth : -fHalfWidth;
 
 		mBranchNode = OctNode.Instance(view_as<OctNode>(iThis+1), vecCenter, fHalfWidth, iBufferSize);
-		hOctNodes.Set(iThis, mBranchNode, _OctNode::mBranches + iOctant);
+		m_hOctNodes.Set(iThis, mBranchNode, _OctNode::mBranches + iOctant);
 	}
 
 	return mBranchNode;
@@ -187,22 +187,22 @@ public any Native_OctNode_GetNearestBranch(Handle hPlugin, int iArgC) {
 	bool bAutoCreate = GetNativeCell(3) != 0;
 
 	float vecCenter[3];
-	hOctNodes.GetArray(iThis, vecCenter, sizeof(vecCenter));
+	m_hOctNodes.GetArray(iThis, vecCenter, sizeof(vecCenter));
 
 	int iOctant = view_as<int>(vecPos[0] >= vecCenter[0]) << 2 | view_as<int>(vecPos[1] >= vecCenter[1]) << 1 | view_as<int>(vecPos[2] >= vecCenter[2]);
 
-	OctNode mBranchNode = hOctNodes.Get(iThis, _OctNode::mBranches + iOctant);
+	OctNode mBranchNode = m_hOctNodes.Get(iThis, _OctNode::mBranches + iOctant);
 	if (!mBranchNode && bAutoCreate) {
-		int iBufferSize = hOctNodes.Get(iThis, _OctNode::iBufferSize);
+		int iBufferSize = m_hOctNodes.Get(iThis, _OctNode::iBufferSize);
 
-		float fHalfWidth = 0.5 * view_as<float>(hOctNodes.Get(iThis, _OctNode::fHalfWidth));
+		float fHalfWidth = 0.5 * view_as<float>(m_hOctNodes.Get(iThis, _OctNode::fHalfWidth));
 
 		vecCenter[0] += iOctant & 4 ? fHalfWidth : -fHalfWidth;
 		vecCenter[1] += iOctant & 2 ? fHalfWidth : -fHalfWidth;
 		vecCenter[2] += iOctant & 1 ? fHalfWidth : -fHalfWidth;
 
 		mBranchNode = OctNode.Instance(view_as<OctNode>(iThis+1), vecCenter, fHalfWidth, iBufferSize);
-		hOctNodes.Set(iThis, mBranchNode, _OctNode::mBranches + iOctant);
+		m_hOctNodes.Set(iThis, mBranchNode, _OctNode::mBranches + iOctant);
 	}
 
 	return mBranchNode;
@@ -252,7 +252,7 @@ public int Native_OctNode_Insert(Handle hPlugin, int iArgC) {
 		eItem.aData = aData;
 		hBuffer.PushArray(eItem);
 
-		int iBufferSize = hOctNodes.Get(view_as<int>(mOctNode)-1, _OctNode::iBufferSize);
+		int iBufferSize = m_hOctNodes.Get(view_as<int>(mOctNode)-1, _OctNode::iBufferSize);
 
 		int iBufferLength = hBuffer.Length;
 		if (iBufferLength > iBufferSize) {
@@ -264,7 +264,7 @@ public int Native_OctNode_Insert(Handle hPlugin, int iArgC) {
 			}
 
 			delete hBuffer;
-			hOctNodes.Set(view_as<int>(mOctNode)-1, 0, _OctNode::hBuffer);
+			m_hOctNodes.Set(view_as<int>(mOctNode)-1, 0, _OctNode::hBuffer);
 		}
 	} else {
 		OctNode mBranchNode = mOctNode.GetNearestBranch(vecPos, true);
@@ -278,7 +278,7 @@ public int Native_OctNode_Find(Handle hPlugin, int iArgC) {
 	int iThis = GetNativeCell(1)-1;
 
 	_OctNode eOctNode;
-	hOctNodes.GetArray(iThis, eOctNode);
+	m_hOctNodes.GetArray(iThis, eOctNode);
 
 	float vecPos[3];
 	GetNativeArray(2, vecPos, sizeof(vecPos));
@@ -329,8 +329,8 @@ public int Native_OctNode_Find(Handle hPlugin, int iArgC) {
 }
 
 public int Native_OctNode_Instance(Handle hPlugin, int iArgC) {
-	if (hOctNodes == null) {
-		hOctNodes = new ArrayList(sizeof(_OctNode));
+	if (m_hOctNodes == null) {
+		m_hOctNodes = new ArrayList(sizeof(_OctNode));
 	}
 
 	OctNode mParent = GetNativeCell(1);
@@ -348,45 +348,45 @@ public int Native_OctNode_Instance(Handle hPlugin, int iArgC) {
 	eOctNode.hBuffer = new ArrayList(sizeof(OctItem));
 	eOctNode.iBufferSize = iBufferSize;
 
-	int iOctNodesLength = hOctNodes.Length;
+	int iOctNodesLength = m_hOctNodes.Length;
 	for (int i=0; i<iOctNodesLength; i++) {
-		if (hOctNodes.Get(i, _OctNode::bGCFlag)) {
-			hOctNodes.SetArray(i, eOctNode);
+		if (m_hOctNodes.Get(i, _OctNode::bGCFlag)) {
+			m_hOctNodes.SetArray(i, eOctNode);
 
 			return i+1;
 		}
 	}
 
-	return iOctNodeAlloc = hOctNodes.PushArray(eOctNode) + 1;
+	return m_iOctNodeAlloc = m_hOctNodes.PushArray(eOctNode) + 1;
 }
 
 public int Native_OctNode_Destroy(Handle hPlugin, int iArgC) {
-	if (hOctNodes != null) {
+	if (m_hOctNodes != null) {
 		int mOctNodeIdx = GetNativeCellRef(1)-1;
 		if (mOctNodeIdx < 0) {
 			return 0;
 		}
 
 		for (int i=0; i<8; i++) {
-			OctNode mBranchNode = hOctNodes.Get(mOctNodeIdx, _OctNode::mBranches+i);
+			OctNode mBranchNode = m_hOctNodes.Get(mOctNodeIdx, _OctNode::mBranches+i);
 			OctNode.Destroy(mBranchNode);
 		}
 
-		hOctNodes.Set(mOctNodeIdx, 1, _OctNode::bGCFlag);
-		delete view_as<ArrayList>(hOctNodes.Get(mOctNodeIdx, _OctNode::hBuffer));
+		m_hOctNodes.Set(mOctNodeIdx, 1, _OctNode::bGCFlag);
+		delete view_as<ArrayList>(m_hOctNodes.Get(mOctNodeIdx, _OctNode::hBuffer));
 
 		SetNativeCellRef(1, NULL_OCTNODE);
 
-		if (mOctNodeIdx+1 == iOctNodeAlloc) {
+		if (mOctNodeIdx+1 == m_iOctNodeAlloc) {
 			for (int i=mOctNodeIdx; i>0; i--) {
-				if (!hOctNodes.Get(i-1, _OctNode::bGCFlag)) {
-					hOctNodes.Resize(iOctNodeAlloc = i);
+				if (!m_hOctNodes.Get(i-1, _OctNode::bGCFlag)) {
+					m_hOctNodes.Resize(m_iOctNodeAlloc = i);
 					return 0;
 				}
 			}
 
-			hOctNodes.Clear();
-			iOctNodeAlloc = 0;
+			m_hOctNodes.Clear();
+			m_iOctNodeAlloc = 0;
 		}
 	}
 

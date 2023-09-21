@@ -4,7 +4,7 @@
 #define DEBUG
 
 #define PLUGIN_AUTHOR "AI"
-#define PLUGIN_VERSION "0.2.0"
+#define PLUGIN_VERSION "0.2.1"
 
 #include <sourcemod>
 #include <octree>
@@ -482,6 +482,7 @@ public int Native_Octree_Find(Handle hPlugin, int iArgC) {
 	int iTotal = mRootNode.Find(vecPosProbe, fRadius, hFound);
 
 	if (!iTotal) {
+		delete hFound;
 		return 0;
 	}
 
@@ -518,6 +519,8 @@ public int Native_Octree_Find(Handle hPlugin, int iArgC) {
 		} else {
 			hResult.Push(hFound.Get(iMinIdx, OctItem::aData));
 		}
+
+		delete hFound;
 
 		return 1;
 	}
